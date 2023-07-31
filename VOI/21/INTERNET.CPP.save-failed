@@ -1,0 +1,125 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using pii = pair<int, int>;
+
+const string FNAME = "INTERNET";
+const int INF = 1e9 + 7;
+const int MAXN = 100000 + 5;
+
+ll n, s, k;
+struct Point {
+  ll x, y;
+};
+
+ll dist(Point a, Point b) {
+  return abs(a.x - b.x) + abs(a.y - b.y);
+}
+
+Point p[MAXN];
+
+struct Edge {
+  ll a, b, w;
+  Edge(int u = 0, int v = 0, int we = 0): a(u), b(v), w(we) {}
+};
+
+struct DSU {
+  set<ll> components;
+  vector<set<ll>> unions;
+  vector<ll> ids;
+  DSU(ll n): unions(n + 1), ids(n + 1) {
+    for (int i = 1; i <= n; ++i) {
+      unions[i].insert(i);
+      ids[i] = i;
+      components.insert(i);
+    }
+  }
+  bool same_component(ll u, ll v) {
+    return ids[u] == ids[v];
+  }
+  bool unite(ll u, ll v) {
+    if (same_component(u, v)) return false;
+    ll s = ids[u], b = ids[v];
+    if (unions[s].size() > unions[b].size()) {
+      swap(s, b);
+    }
+    for (ll node: unions[s]) {
+      ids[node] = b;
+      unions[b].insert(node);
+    }
+    components.erase(s);
+    return true;
+  }
+};
+
+struct cmp {
+  bool operator () (const Edge &a, const Edge &b) const {
+    return a.w < b.w;
+  }
+};
+
+int main() {
+  ios_base::sync_with_stdio(false);
+  cout.tie(NULL);
+  cin.tie(NULL);
+#ifdef LIONELMESSI
+  freopen((FNAME + ".inp").c_str(), "r", stdin);
+//  freopen((FNAME + ".out").c_str(), "w", stdout);
+#else
+  freopen((FNAME + ".inp").c_str(), "r", stdin);
+  freopen((FNAME + ".out").c_str(), "w", stdout);
+#endif // LIONELMESSI
+
+  cin >> n >> s >> k;
+  for (int i = 0; i < n; ++i) {
+    cin >> p[i].x >> p[i].y;
+  }
+
+  DSU dsu(n);
+
+  if (n <= 1000) {
+    set<Edge, cmp> v;
+    for (int i = 0; i < n;  ++i) {
+      for (int j = i + 1; j < n; ++j) {
+        if (dist(p[i], p[j]) <= s) {
+          dsu.unite(i, j);
+          v.insert({i, j, dist(p[i], p[j])});
+        }
+      }
+    }
+
+    ll res = 0;
+
+    while (k--) {
+      set<Edge, cmp>::iterator minEdge = v.begin();
+      for (set<Edge, cmp>::iterator it = v.begin(); it != v.end(); ++it) {
+        if (!dsu.same_component(it->a, it->b) && it->w < minEdge) {
+          minEdge = it;
+        }
+      }
+      res += minEdge->w;
+      dsu.unite(minEdge->a, minEdge->b);
+    }
+    cout << res;
+  }
+
+  bool is_a_line_x = true;
+  bool is_a_line_y = true;
+  Point checker = p[0];
+  for (int i = 1; i < n; ++i) {
+    is_a_line_x = is_a_line_x && (p[i].x == checker.x);
+  }
+  for (int i = 1; i < n; ++i) {
+    is_a_line_y = is_a_line_y && (p[i].y == checker.y);
+  }
+
+
+  if (is_a_line_y || is_a_line_x) {
+
+  }
+
+  return 0;
+}
+
+

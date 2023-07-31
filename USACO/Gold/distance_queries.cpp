@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+using ll = long long;
+using pii = pair<int, int>;
+
+const string FNAME = "distquery";
+const ll INF = 1e18;
+const int MAXN = 2*1e5 + 1;
+
+vector<int> edges[MAXN], traverse(1);
+ll height[MAXN] = {INF}, trav_pos[MAXN];
+
+struct TravSegmentTree {
+  vector<ll> st;
+  int n;
+  int f(int node1, int node2) {
+    return height[node1] < height[node2]? node1: node2;
+  }
+  TravSegmentTree(): st(4*traverse.size()), n(traverse.size() - 1) {
+    for (int i = 1; i <= n; ++i) {
+      _update(1, 1, n, i, traverse[i]);
+    }
+  }
+  void _update(int id, int l, int r, int pos, ll val) {
+    if (l > pos || r < pos) return;
+    if (l == r) return void(st[id] = val);
+    int mid = (l + r) >> 1;
+    _update(id << 1, l, mid, pos, val);
+    _update(id << 1 | 1, mid + 1, r, pos, val);
+    st[id] = f(st[id << 1], st[id << 1 | 1]);
+  }
+  int _query(int id, int l, int r, int ql, int qr) {
+    if (l > qr || r < ql) return 0;
+    if (l >= ql && r <= qr) return st[id];
+    int mid = (l + r) >> 1;
+    return f(_query(id << 1, l, mid, ql, qr), _query(id << 1 | 1, mid + 1, r, ql, qr));
+  }
+  int lca(int x, int y) {
+    int a = trav_pos[x], b = trav_pos[y];
+    if (a > b) swap(a, b);
+    return _query(1, 1, n, a, b);
+  }
+  ll dist(int x, int y) {
+    return height[x] + height[y] - 2*height[lca(x, y)];
+  }
+};
+
+void dfs(int node, int prev = -1, int depth = 0) {
+  height[node] = depth;
+  trav_pos[node] = traverse.size();
+  traverse.push_back(node);
+  for (int adj: edges[node]) {
+    if (adj == prev) continue;
+    dfs(adj, node, depth + 1);
+    traverse.push_back(node);
+  }
+}
+
+int main() {
+  ios_base::sync_with_stdio(false);
+  cout.tie(NULL);
+  cin.tie(NULL);
+
+//  freopen((FNAME + ".in").c_str(), "r", stdin);
+//  freopen((FNAME + ".out").c_str(), "w", stdout);
+
+  int n, q;
+  cin >> n >> q;
+
+  for (int i = 1; i < n; ++i) {
+    int a, b;
+    cin >> a >> b;
+    edges[a].push_back(b);
+    edges[b].push_back(a);
+  }
+
+  dfs(1);
+  TravSegmentTree st;
+
+  while (q--) {
+    int a, b;
+    cin >> a >> b;
+
+    cout << st.dist(a, b) << "\n";
+  }
+
+  return 0;
+}
+
+
